@@ -80,8 +80,11 @@ export GOMODCACHE="$HOME/.ohos-go-build/gomodcache"
 export GOPATH="$HOME/.ohos-go-build/gopath"
 # goproxy.cn keeps module downloads working without a global proxy
 export GOPROXY="${GOPROXY:-https://goproxy.cn,https://proxy.golang.org,direct}"
-export CC="\"$clang\" --target=aarch64-linux-ohos --sysroot=\"$sysroot\" -D__MUSL__"
-export CXX="\"$clangxx\" --target=aarch64-linux-ohos --sysroot=\"$sysroot\" -D__MUSL__"
+# cgo splits CC/CXX on spaces; embedded quotes are passed to the compiler
+# literally and break #include resolution. Keep the SDK path space-free (or
+# point DEVECO_SDK_HOME at a symlink) instead of quoting here.
+export CC="$clang --target=aarch64-linux-ohos --sysroot=$sysroot -D__MUSL__"
+export CXX="$clangxx --target=aarch64-linux-ohos --sysroot=$sysroot -D__MUSL__"
 
 cd "$project_root/native/go_bridge"
 go build -buildmode=c-shared -trimpath \

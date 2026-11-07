@@ -6,10 +6,11 @@ import { notificationManager } from '@kit.NotificationKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { StoragePaths } from './StoragePaths';
 import { DiagnosticEventStore } from './DiagnosticEventStore';
+import { AppIdentity } from './AppIdentity';
 
 const DOMAIN: number = 0x0000;
 const TAG: string = 'VpnBackgroundTask';
-const BUNDLE_NAME: string = 'io.github.tailscaleohos';
+// Bundle identity is resolved at runtime; see AppScope/app.json5.
 const ENTRY_ABILITY_NAME: string = 'EntryAbility';
 const VPN_STATUS_FRESH_MS: number = 15000;
 const VPN_STATUS_GRACE_MS: number = 60000;
@@ -186,7 +187,7 @@ export class VpnBackgroundTaskManager {
   private async start(context: common.UIAbilityContext, generation: number): Promise<void> {
     const revision: number = this.cancellationRevision;
     const info: wantAgent.WantAgentInfo = {
-      wants: [{ bundleName: BUNDLE_NAME, abilityName: ENTRY_ABILITY_NAME }],
+      wants: [{ bundleName: AppIdentity.bundleName(), abilityName: ENTRY_ABILITY_NAME }],
       actionType: wantAgent.OperationType.START_ABILITY,
       requestCode: 1001,
       actionFlags: [wantAgent.WantAgentFlags.UPDATE_PRESENT_FLAG]

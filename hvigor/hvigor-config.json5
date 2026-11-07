@@ -1,9 +1,9 @@
 {
   "modelVersion": "5.0.0",
-  "dependencies": {
-    "@ohos/hvigor": "6.26.1",
-    "@ohos/hvigor-ohos-plugin": "6.26.1"
-  },
+  // Leave empty so the build uses the hvigor engine bundled with DevEco Studio.
+  // Pinning a version here breaks sync when the IDE's wrapper (6.26.9+) computes
+  // a different project_caches path than the pinned hvigor runtime (<=6.26.1).
+  "dependencies": {},
   "execution": {},
   "logging": {},
   "debugging": {},

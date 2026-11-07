@@ -22,6 +22,8 @@ if (@($usbTargets).Count -ne 1) {
   throw 'Expected exactly one connected USB target.'
 }
 $target = ($usbTargets -split "\t")[0]
+$bundleName = ([regex]::Match((Get-Content (Join-Path $PSScriptRoot '..\AppScope\app.json5') -Raw), '"bundleName"\s*:\s*"([^"]+)"')).Groups[1].Value
+if (-not $bundleName) { throw 'bundleName was not found in AppScope/app.json5.' }
 
 if (-not $SkipInstall) {
   $hap = Join-Path $projectRoot 'entry\build\default\outputs\default\entry-default-signed.hap'
@@ -34,7 +36,7 @@ if (-not $SkipInstall) {
   }
 }
 
-$startOutput = (& $hdc -t $target shell aa start -b io.github.tailscaleohos -a EntryAbility 2>&1) -join "`n"
+$startOutput = (& $hdc -t $target shell aa start -b $bundleName -a EntryAbility 2>&1) -join "`n"
 if ($startOutput.Contains('device screen is locked')) {
   throw 'The device screen is locked. Unlock it before running the UI probe.'
 }

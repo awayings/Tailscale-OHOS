@@ -28,3 +28,5 @@ certs/release/*.jks
 certs/release/*.keystore
 certs/release/*.key
 certs/release/*.p7b
+
+.workbuddy/

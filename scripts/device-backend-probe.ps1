@@ -23,6 +23,8 @@ if ($usbTargets.Count -ne 1) {
   throw 'Expected exactly one connected USB target.'
 }
 $target = ($usbTargets[0] -split "`t")[0]
+$bundleName = ([regex]::Match((Get-Content (Join-Path $PSScriptRoot '..\AppScope\app.json5') -Raw), '"bundleName"\s*:\s*"([^"]+)"')).Groups[1].Value
+if (-not $bundleName) { throw 'bundleName was not found in AppScope/app.json5.' }
 
 if (-not $ArtifactDir) {
   $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
@@ -41,7 +43,7 @@ if (-not $SkipInstall) {
   }
 }
 
-& $hdc -t $target shell aa start -b io.github.tailscaleohos -a EntryAbility | Out-Null
+& $hdc -t $target shell aa start -b $bundleName -a EntryAbility | Out-Null
 if ($LASTEXITCODE -ne 0) {
   throw "Ability start failed with exit code $LASTEXITCODE"
 }
@@ -108,7 +110,7 @@ for ($attempt = 1; $attempt -le 12; $attempt++) {
   & $hdc -t $target shell uitest uiInput click $statusNode.X $statusNode.Y | Out-Null
 }
 
-$appPid = (& $hdc -t $target shell pidof io.github.tailscaleohos).Trim()
+$appPid = (& $hdc -t $target shell pidof $bundleName).Trim()
 if ($appPid -notmatch '^\d+$') { throw 'The application process exited.' }
 if (-not ($status.Contains('state=NeedsLogin') -or $status.Contains('state=Running'))) {
   throw "Backend did not reach a ready state: $status"

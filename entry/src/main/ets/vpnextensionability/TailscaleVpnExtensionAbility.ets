@@ -13,12 +13,14 @@ import {
   TaildropNotificationFile
 } from '../services/TaildropNotificationService';
 import { ControlServerConfig, ControlServerSettings } from '../services/ControlServerConfig';
+import { DnsSettings, DnsSettingsStore } from '../services/DnsSettings';
+import { AppIdentity } from '../services/AppIdentity';
 import { DeviceNameService } from '../services/DeviceNameService';
 import { VpnNetworkMonitor } from '../services/VpnNetworkMonitor';
 
 const DOMAIN = 0x0000;
 const TAG = 'TailscaleVpn';
-const BUNDLE_NAME = 'io.github.tailscaleohos';
+// Bundle identity is resolved at runtime; see AppScope/app.json5.
 const VPN_EXISTS_ERROR_CODE: number = 2203002;
 const VPN_DESTROY_SETTLE_MS: number = 300;
 const VPN_REPLACE_APPROVAL_POLL_INTERVAL_MS: number = 200;
@@ -423,7 +425,7 @@ export default class TailscaleVpnExtensionAbility extends VpnExtensionAbility {
       isIPv4Accepted: true,
       isIPv6Accepted: false,
       isBlocking: false,
-      trustedApplications: [BUNDLE_NAME]
+      trustedApplications: [AppIdentity.bundleName()]
     };
     // HarmonyOS starts a VPN Extension in its own application process. The
     // UI process may have already authenticated, but its in-memory Go backend
@@ -497,8 +499,15 @@ export default class TailscaleVpnExtensionAbility extends VpnExtensionAbility {
           isIPv6Accepted: configParts[1].length > 0,
           isInternal: true,
           isBlocking: false,
-          blockedApplications: [BUNDLE_NAME]
+          blockedApplications: [AppIdentity.bundleName()]
         };
+        // HarmonyOS applies these resolvers to apps proxied by this VPN. Keep
+        // them empty unless the user explicitly enabled the DNS override, so a
+        // default install retains the physical network's resolver.
+        const dnsSettings: DnsSettings = DnsSettingsStore.load(this.context.filesDir);
+        config.dnsAddresses =
+          DnsSettingsStore.vpnDnsAddresses(dnsSettings, configParts[1].length > 0);
+        config.searchDomains = DnsSettingsStore.vpnSearchDomains(dnsSettings);
         backendReady = true;
       }
     }
@@ -716,11 +725,16 @@ export default class TailscaleVpnExtensionAbility extends VpnExtensionAbility {
     const hasDefaultIPv6: boolean = routes.some((route: vpnExtension.RouteInfo) =>
       route.destination.address.address === '::' && route.destination.prefixLength === 0 &&
       route.isDefaultRoute);
+    // Keep resolver addresses out of diagnostics; counts are enough to confirm
+    // that the requested override reached the VPN configuration.
+    const dnsCount: number = (config.dnsAddresses ?? []).length;
+    const searchDomainCount: number = (config.searchDomains ?? []).length;
     this.writeTextFile(`${this.context.filesDir}/${VPN_CONFIG_SUMMARY_FILE_NAME}`,
       `addressCount=${addresses.length} | routeCount=${routes.length} | ` +
       `hasIPv4Address=${hasIPv4Address} | hasIPv6Address=${hasIPv6Address} | ` +
       `hasTailnetIPv4=${hasTailnetIPv4} | hasTailnetIPv6=${hasTailnetIPv6} | ` +
       `hasDefaultIPv4=${hasDefaultIPv4} | hasDefaultIPv6=${hasDefaultIPv6} | ` +
+      `dnsCount=${dnsCount} | searchDomainCount=${searchDomainCount} | ` +
       `ipv4Accepted=${config.isIPv4Accepted} | ipv6Accepted=${config.isIPv6Accepted} | ` +
       `mtu=${config.mtu}`);
   }

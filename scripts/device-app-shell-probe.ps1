@@ -11,7 +11,8 @@ $hdc = Join-Path $devecoHome 'sdk\default\openharmony\toolchains\hdc.exe'
 $usbTargets = @(& $hdc list targets -v | Where-Object { $_ -match "`t`tUSB`tConnected`t" })
 if ($usbTargets.Count -ne 1) { throw 'Expected exactly one connected USB target.' }
 $target = ($usbTargets[0] -split "`t")[0]
-$bundleName = 'io.github.tailscaleohos'
+$bundleName = ([regex]::Match((Get-Content (Join-Path $PSScriptRoot '..\AppScope\app.json5') -Raw), '"bundleName"\s*:\s*"([^"]+)"')).Groups[1].Value
+if (-not $bundleName) { throw 'bundleName was not found in AppScope/app.json5.' }
 
 if (-not $SkipInstall) {
   $hap = Join-Path $projectRoot 'entry\build\default\outputs\default\entry-default-signed.hap'

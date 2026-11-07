@@ -7,6 +7,8 @@ import test from 'node:test';
 // Run the real lifecycle coordinator with deterministic platform boundaries.
 // ArkTS compilation is verified separately by the repository debug build.
 const source = readFileSync(new URL('../entry/src/main/ets/services/VpnBackgroundTaskManager.ets', import.meta.url), 'utf8');
+const bundleName = /"bundleName"\s*:\s*"([^"]+)"/.exec(
+  readFileSync(new URL('../AppScope/app.json5', import.meta.url), 'utf8'))?.[1] ?? '';
 const javascript = stripTypeScriptTypes(source.replace(/^import .*;\r?$/gm, '')
   .replace('export class VpnBackgroundTaskManager', 'class VpnBackgroundTaskManager'));
 const flush = async () => { for (let i = 0; i < 30; i++) await Promise.resolve(); };
@@ -44,7 +46,8 @@ function fixture() {
       SlotType: { LIVE_VIEW: 4 }, ContentType: { NOTIFICATION_CONTENT_SYSTEM_LIVE_VIEW: 5 },
       publish: async request => { f.notifications.push(request); if (f.publishGate) await f.publishGate.promise; }
     },
-    hilog: { info: () => {} }, DiagnosticEventStore: { record: (...args) => f.events.push(args) }
+    hilog: { info: () => {} }, DiagnosticEventStore: { record: (...args) => f.events.push(args) },
+    AppIdentity: { bundleName: () => bundleName }
   };
   vm.runInNewContext(javascript + '\nglobalThis.Manager = VpnBackgroundTaskManager;', sandbox);
   f.manager = new sandbox.Manager();

@@ -21,7 +21,8 @@ if ($usbTargets.Count -ne 1) {
   throw 'Expected exactly one connected USB target.'
 }
 $target = ($usbTargets[0] -split "`t")[0]
-$bundleName = 'io.github.tailscaleohos'
+$bundleName = ([regex]::Match((Get-Content (Join-Path $PSScriptRoot '..\AppScope\app.json5') -Raw), '"bundleName"\s*:\s*"([^"]+)"')).Groups[1].Value
+if (-not $bundleName) { throw 'bundleName was not found in AppScope/app.json5.' }
 $filesDir = "/data/app/el2/$AppUserId/base/$bundleName/haps/entry/files"
 $vpnStatusPath = "$filesDir/vpn-probe-status.txt"
 

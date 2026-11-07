@@ -2,10 +2,11 @@ import { common, wantAgent, WantAgent } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { notificationManager } from '@kit.NotificationKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
+import { AppIdentity } from './AppIdentity';
 
 const DOMAIN: number = 0x0000;
 const TAG: string = 'TaildropNotifications';
-const BUNDLE_NAME: string = 'io.github.tailscaleohos';
+// Bundle identity is resolved at runtime; see AppScope/app.json5.
 const ENTRY_ABILITY_NAME: string = 'EntryAbility';
 const PROGRESS_NOTIFICATION_ID: number = 420001;
 const COMPLETION_NOTIFICATION_BASE_ID: number = 421000;
@@ -129,7 +130,7 @@ async function taildropActionAgent(requestCode: number, action: string, fileName
   size: number, receivedAtMs: number, eventId: string): Promise<WantAgent> {
   return await wantAgent.getWantAgent({
     wants: [{
-      bundleName: BUNDLE_NAME,
+      bundleName: AppIdentity.bundleName(),
       abilityName: ENTRY_ABILITY_NAME,
       parameters: {
         taildropOpenInbox: true,
